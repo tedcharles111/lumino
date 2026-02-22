@@ -5,7 +5,7 @@ import { PropertiesPanel } from "@/components/editor/PropertiesPanel";
 import { Canvas } from "@/components/editor/Canvas";
 import { DropZone } from "@/components/editor/DropZone";
 import { EditorMode } from "@/types";
-import { exportCanvas } from "@/lib/canvas-utils";
+import { exportCanvas, applyBlurWithMask } from "@/lib/canvas-utils";
 import { editImage } from "@/services/gemini";
 import { Loader2 } from "lucide-react";
 
@@ -58,23 +58,36 @@ export function Editor() {
 
         // 2. Determine prompt based on action
         let prompt = "";
+        let isMaskRequest = false;
+
         if (action === "enhance") {
           prompt =
             "Enhance this image: fix lighting, color balance, and sharpness. Keep it natural.";
         } else if (action === "blur-bg") {
+          // Strategy: Generate a mask, then blur background in canvas
+          isMaskRequest = true;
           prompt =
-            "Simulate a shallow depth of field (bokeh) effect. Keep the main subject in sharp focus and untouched. Apply a realistic blur ONLY to the background. The subject must remain crisp and distinct from the background.";
+            "Create a binary mask of the main subject. The subject should be SOLID WHITE. The background should be SOLID BLACK. Do not include any gray areas or gradients if possible. High contrast. White = Subject, Black = Background.";
         } else if (action === "remove-bg") {
           prompt =
-            "Remove the background of this image, leaving only the main subject on a transparent or white background.";
+            "Remove the background of this image, leaving only the main subject on a transparent background.";
         }
 
         // 3. Call Gemini
-        // Gemini returns a new image URL (base64)
-        // We'll update the editor state with this new image
-        // And reset adjustments since they are now 'baked in'
-        const newImageBase64 = await editImage(currentCanvas, prompt);
-        updateImage(newImageBase64);
+        const resultBase64 = await editImage(currentCanvas, prompt);
+
+        if (isMaskRequest && action === "blur-bg") {
+          // Composite using the generated mask
+          const compositedImage = await applyBlurWithMask(
+            currentCanvas,
+            resultBase64,
+            20 // Blur amount
+          );
+          updateImage(compositedImage);
+        } else {
+          // Standard image replacement
+          updateImage(resultBase64);
+        }
       } catch (err: any) {
         console.error("AI Action Failed:", err);
         setError(err.message || "AI processing failed. Please try again.");

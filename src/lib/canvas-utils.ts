@@ -163,3 +163,106 @@ async function exportVideo(
     video.onerror = (err) => reject(err);
   });
 }
+
+export async function applyBlurWithMask(
+  originalSrc: string,
+  maskSrc: string,
+  blurAmount: number = 20
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const original = new Image();
+    original.crossOrigin = "anonymous";
+    
+    const mask = new Image();
+    mask.crossOrigin = "anonymous";
+
+    let loadedCount = 0;
+    const checkLoaded = () => {
+      loadedCount++;
+      if (loadedCount === 2) process();
+    };
+
+    original.onload = checkLoaded;
+    mask.onload = checkLoaded;
+    original.onerror = (err) => reject(err);
+    mask.onerror = (err) => reject(err);
+
+    original.src = originalSrc;
+    mask.src = maskSrc;
+
+    function process() {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Could not get canvas context"));
+        return;
+      }
+
+      canvas.width = original.naturalWidth;
+      canvas.height = original.naturalHeight;
+
+      // 1. Create the Blurred Background
+      const blurCanvas = document.createElement("canvas");
+      blurCanvas.width = canvas.width;
+      blurCanvas.height = canvas.height;
+      const blurCtx = blurCanvas.getContext("2d");
+      if (!blurCtx) return;
+
+      blurCtx.filter = `blur(${blurAmount}px)`;
+      blurCtx.drawImage(original, 0, 0);
+      
+      // 2. Prepare the Mask
+      // Convert the B&W mask image into a true Alpha mask
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = canvas.width;
+      maskCanvas.height = canvas.height;
+      const maskCtx = maskCanvas.getContext("2d");
+      if (!maskCtx) return;
+
+      // Draw the mask image
+      maskCtx.drawImage(mask, 0, 0);
+      
+      // Get pixel data to convert Luminance to Alpha
+      const maskImageData = maskCtx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = maskImageData.data;
+      
+      // Iterate through pixels
+      for (let i = 0; i < data.length; i += 4) {
+        // Calculate luminance (brightness)
+        // R=data[i], G=data[i+1], B=data[i+2]
+        // If white (255,255,255), luminance is 255.
+        // If black (0,0,0), luminance is 0.
+        const brightness = (data[i] + data[i+1] + data[i+2]) / 3;
+        
+        // Set Alpha channel to the brightness value
+        // White pixels become Opaque (255)
+        // Black pixels become Transparent (0)
+        data[i + 3] = brightness; 
+      }
+      
+      // Put the modified data back to maskCanvas
+      maskCtx.putImageData(maskImageData, 0, 0);
+
+      // 3. Create the Masked Subject
+      const subjectCanvas = document.createElement("canvas");
+      subjectCanvas.width = canvas.width;
+      subjectCanvas.height = canvas.height;
+      const subjectCtx = subjectCanvas.getContext("2d");
+      if (!subjectCtx) return;
+
+      // Draw the original sharp image
+      subjectCtx.drawImage(original, 0, 0);
+
+      // Apply the Alpha Mask
+      // 'destination-in' keeps the subject where the mask is opaque (White in original mask)
+      subjectCtx.globalCompositeOperation = "destination-in";
+      subjectCtx.drawImage(maskCanvas, 0, 0);
+
+      // 4. Composite: Draw Blurred BG first, then Sharp Subject on top
+      ctx.drawImage(blurCanvas, 0, 0);
+      ctx.drawImage(subjectCanvas, 0, 0);
+
+      resolve(canvas.toDataURL("image/png"));
+    }
+  });
+}
