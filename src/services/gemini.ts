@@ -3,7 +3,13 @@ import { GoogleGenAI } from "@google/genai";
 let ai: GoogleGenAI | null = null;
 
 function getAiClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
+  let apiKey = process.env.GEMINI_API_KEY;
+  
+  // Fallback to VITE_ prefixed var if process.env one is missing/undefined
+  if (!apiKey && typeof import.meta !== 'undefined' && import.meta.env) {
+    apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  }
+
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not set. Please configure it in your environment variables.");
   }

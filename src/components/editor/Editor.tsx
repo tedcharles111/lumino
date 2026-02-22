@@ -63,7 +63,7 @@ export function Editor() {
             "Enhance this image: fix lighting, color balance, and sharpness. Keep it natural.";
         } else if (action === "blur-bg") {
           prompt =
-            "Blur the background of this image heavily, keeping the main subject sharp and in focus.";
+            "Identify the main subject of the image and keep it in sharp focus. Apply a strong, realistic gaussian blur to the entire background. Ensure the edges of the subject are clean and distinct from the blurred background.";
         } else if (action === "remove-bg") {
           prompt =
             "Remove the background of this image, leaving only the main subject on a transparent or white background.";
