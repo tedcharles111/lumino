@@ -63,7 +63,7 @@ export function Editor() {
             "Enhance this image: fix lighting, color balance, and sharpness. Keep it natural.";
         } else if (action === "blur-bg") {
           prompt =
-            "Identify the main subject of the image and keep it in sharp focus. Apply a strong, realistic gaussian blur to the entire background. Ensure the edges of the subject are clean and distinct from the blurred background.";
+            "Simulate a shallow depth of field (bokeh) effect. Keep the main subject in sharp focus and untouched. Apply a realistic blur ONLY to the background. The subject must remain crisp and distinct from the background.";
         } else if (action === "remove-bg") {
           prompt =
             "Remove the background of this image, leaving only the main subject on a transparent or white background.";
@@ -129,6 +129,7 @@ export function Editor() {
         }}
         canUndo={state.historyIndex > 0}
         canRedo={state.historyIndex < state.history.length - 1}
+        mediaType={state.type}
       />
 
       {/* Main Content */}

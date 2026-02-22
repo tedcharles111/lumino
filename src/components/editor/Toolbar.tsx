@@ -20,6 +20,7 @@ interface ToolbarProps {
   onUpload: () => void;
   canUndo: boolean;
   canRedo: boolean;
+  mediaType: "image" | "video" | null;
 }
 
 export function Toolbar({
@@ -31,6 +32,7 @@ export function Toolbar({
   onUpload,
   canUndo,
   canRedo,
+  mediaType,
 }: ToolbarProps) {
   return (
     <div className="w-16 h-full bg-black border-r border-white/10 flex flex-col items-center py-4 gap-4 z-20">
@@ -125,7 +127,7 @@ export function Toolbar({
           size="icon"
           onClick={onExport}
           className="bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20"
-          title="Export"
+          title={mediaType === "video" ? "Export Video" : "Export Photo"}
         >
           <Download className="w-5 h-5" />
         </Button>
