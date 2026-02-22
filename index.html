@@ -3,10 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <title>Lumina Studio</title>
+    <script>
+      window.process = { env: {} };
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="height: 100vh; width: 100vw; background-color: black; display: flex; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
+        Loading Lumina Studio...
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
