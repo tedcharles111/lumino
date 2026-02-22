@@ -70,26 +70,14 @@ export function Editor() {
         }
 
         // 3. Call Gemini
-        // Note: Gemini returns a new image URL (base64)
+        // Gemini returns a new image URL (base64)
         // We'll update the editor state with this new image
         // And reset adjustments since they are now 'baked in'
-        // Wait, for "remove-bg", Gemini might return a mask or a new image.
-        // Let's assume it returns a new image.
-        // Also, Gemini 2.5 Flash Image is a generation model, so it generates a NEW image based on the prompt + input.
-        // It might change the subject slightly. This is a known limitation of generative edit.
-        // But for "blur background", it should work reasonably well.
-
-        // Mocking the AI call for now as I don't have the API key set up in this environment yet?
-        // No, the user provided the API key in .env.example, so it should be injected.
-        // However, I need to be careful about the response format.
-        // The service returns a base64 string.
-
-        // Real call:
         const newImageBase64 = await editImage(currentCanvas, prompt);
         updateImage(newImageBase64);
-      } catch (err) {
+      } catch (err: any) {
         console.error("AI Action Failed:", err);
-        setError("AI processing failed. Please try again.");
+        setError(err.message || "AI processing failed. Please try again.");
       } finally {
         setIsProcessing(false);
       }
